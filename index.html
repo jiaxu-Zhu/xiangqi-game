@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>中国象棋 v1.0.0</title>
+    <title>中国象棋 v1.1.0</title>
     <style>
         * {
             margin: 0;
@@ -46,6 +46,40 @@
         .player-info .pieces-left {
             font-size: 12px;
             opacity: 0.8;
+        }
+        .move-history-panel {
+            background: rgba(255,255,255,0.95);
+            padding: 15px;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 500px;
+            margin-top: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .move-history-panel h4 {
+            color: #8B4513;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .move-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+        .move-item {
+            background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 13px;
+        }
+        .move-item.red {
+            background: linear-gradient(135deg, #C00 0%, #E00 100%);
+        }
+        .move-item.black {
+            background: linear-gradient(135deg, #000 0%, #333 100%);
         }
         .game-container {
             position: relative;
@@ -216,10 +250,15 @@
         <button class="btn" onclick="showInfo()">📖 规则说明</button>
     </div>
     
+    <div class="move-history-panel">
+        <h4>♟️ 走棋记录</h4>
+        <div class="move-list" id="moveList"></div>
+    </div>
+    
     <div class="modal" id="infoModal">
         <div class="modal-content">
             <h2>🎮 中国象棋</h2>
-            <p style="text-align: center;"><strong>版本：</strong>v1.0.0 | <strong>更新时间：</strong>2026-02-27</p>
+            <p style="text-align: center;"><strong>版本：</strong>v1.1.0 | <strong>更新时间：</strong>2026-02-27</p>
             
             <h3>📖 游戏规则</h3>
             <ul>
@@ -245,6 +284,15 @@
                 <li>绿色标记：可移动位置</li>
                 <li>红色标记：可吃子位置</li>
                 <li>黄色高亮：当前选中棋子</li>
+                <li>金色边框：最后一步移动</li>
+            </ul>
+            
+            <h3>✨ 新增功能</h3>
+            <ul>
+                <li>音效系统：移动、吃子、胜利音效</li>
+                <li>震动反馈：移动端触觉反馈</li>
+                <li>走棋记录：实时显示每一步棋</li>
+                <li>精美画面：棋子立体效果、阴影</li>
             </ul>
             
             <button class="btn" onclick="hideInfo()">关闭</button>
@@ -314,8 +362,75 @@
             moveHistory: [],
             gameOver: false,
             redPieces: 16,
-            blackPieces: 16
+            blackPieces: 16,
+            soundEnabled: true,
+            lastMove: null  // 记录最后一步移动，用于高亮显示
         };
+        
+        // 音效系统
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSound(type) {
+            if (!gameState.soundEnabled) return;
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            switch (type) {
+                case 'move':
+                    oscillator.frequency.value = 440;
+                    oscillator.type = 'sine';
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.1);
+                    break;
+                    
+                case 'capture':
+                    oscillator.frequency.value = 523;
+                    oscillator.type = 'square';
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.15);
+                    break;
+                    
+                case 'win':
+                    // 胜利音效 - 和弦
+                    [523, 659, 784, 1047].forEach((freq, i) => {
+                        const osc = audioContext.createOscillator();
+                        const gain = audioContext.createGain();
+                        osc.connect(gain);
+                        gain.connect(audioContext.destination);
+                        osc.frequency.value = freq;
+                        osc.type = 'triangle';
+                        gain.gain.setValueAtTime(0.2, audioContext.currentTime + i * 0.1);
+                        gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + i * 0.1 + 0.3);
+                        osc.start(audioContext.currentTime + i * 0.1);
+                        osc.stop(audioContext.currentTime + i * 0.1 + 0.3);
+                    });
+                    break;
+                    
+                case 'select':
+                    oscillator.frequency.value = 330;
+                    oscillator.type = 'sine';
+                    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.05);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.05);
+                    break;
+            }
+        }
+        
+        // 震动反馈（移动端）
+        function vibrate(pattern) {
+            if (navigator.vibrate) {
+                navigator.vibrate(pattern);
+            }
+        }
         
         // 初始化游戏
         function initGame() {
@@ -442,6 +557,27 @@
                 ctx.lineWidth = 3;
                 ctx.stroke();
             }
+            
+            // 高亮最后一步移动
+            if (gameState.lastMove) {
+                // 起始位置
+                const fromX = config.margin + gameState.lastMove.from.x * config.cellSize;
+                const fromY = config.margin + gameState.lastMove.from.y * config.cellSize;
+                ctx.beginPath();
+                ctx.rect(fromX - config.cellSize/2, fromY - config.cellSize/2, config.cellSize, config.cellSize);
+                ctx.strokeStyle = 'rgba(255, 215, 0, 0.5)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // 目标位置
+                const toX = config.margin + gameState.lastMove.to.x * config.cellSize;
+                const toY = config.margin + gameState.lastMove.to.y * config.cellSize;
+                ctx.beginPath();
+                ctx.rect(toX - config.cellSize/2, toY - config.cellSize/2, config.cellSize, config.cellSize);
+                ctx.strokeStyle = 'rgba(255, 215, 0, 0.5)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
         }
         
         // 绘制单个棋子
@@ -452,16 +588,26 @@
             
             const px = config.margin + x * config.cellSize;
             const py = config.margin + y * config.cellSize;
+            const radius = config.cellSize * 0.42;
             
-            // 棋子背景
+            // 阴影效果
             ctx.beginPath();
-            ctx.arc(px, py, config.cellSize * 0.42, 0, Math.PI * 2);
-            ctx.fillStyle = '#F5DEB3';
+            ctx.arc(px + 3, py + 3, radius, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.fill();
+            
+            // 棋子背景 - 渐变效果
+            const gradient = ctx.createRadialGradient(px - radius/3, py - radius/3, 0, px, py, radius);
+            gradient.addColorStop(0, '#FFF8DC');
+            gradient.addColorStop(1, '#F5DEB3');
+            ctx.beginPath();
+            ctx.arc(px, py, radius, 0, Math.PI * 2);
+            ctx.fillStyle = gradient;
             ctx.fill();
             
             // 边框
             ctx.beginPath();
-            ctx.arc(px, py, config.cellSize * 0.42, 0, Math.PI * 2);
+            ctx.arc(px, py, radius, 0, Math.PI * 2);
             ctx.strokeStyle = isRed ? '#C00' : '#000';
             ctx.lineWidth = 2;
             ctx.stroke();
@@ -473,12 +619,24 @@
             ctx.lineWidth = 1;
             ctx.stroke();
             
-            // 文字
+            // 文字 - 添加阴影效果
             ctx.font = `bold ${config.cellSize * 0.5}px Microsoft YaHei`;
             ctx.fillStyle = isRed ? '#C00' : '#000';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
+            
+            // 文字阴影
+            ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+            ctx.shadowBlur = 2;
+            ctx.shadowOffsetX = 1;
+            ctx.shadowOffsetY = 1;
             ctx.fillText(text, px, py + config.cellSize * 0.05);
+            
+            // 重置阴影
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
         }
         
         // 获取棋子颜色
@@ -651,6 +809,7 @@
                 // 选择棋子
                 gameState.selectedPiece = { x, y };
                 gameState.validMoves = getValidMoves(x, y);
+                playSound('select');
                 drawBoard();
             } else {
                 // 取消选择
@@ -666,17 +825,30 @@
             const target = gameState.board[toY][toX];
             
             // 记录移动历史
-            gameState.moveHistory.push({
+            const moveRecord = {
                 from: { x: fromX, y: fromY },
                 to: { x: toX, y: toY },
                 piece: piece,
                 captured: target,
                 turn: gameState.currentTurn
-            });
+            };
+            gameState.moveHistory.push(moveRecord);
+            
+            // 更新最后一步移动（用于高亮）
+            gameState.lastMove = moveRecord;
             
             // 更新棋盘
             gameState.board[toY][toX] = piece;
             gameState.board[fromY][fromX] = null;
+            
+            // 播放音效和震动
+            if (target) {
+                playSound('capture');
+                vibrate(50);
+            } else {
+                playSound('move');
+                vibrate(30);
+            }
             
             // 更新棋子计数
             if (target) {
@@ -699,6 +871,7 @@
             gameState.validMoves = [];
             
             updatePlayerInfo();
+            updateMoveList();
             drawBoard();
         }
         
@@ -709,6 +882,31 @@
             document.getElementById('winnerText').textContent = winnerText;
             document.getElementById('totalMoves').textContent = gameState.moveHistory.length;
             document.getElementById('gameOver').classList.add('show');
+            
+            // 播放胜利音效和震动
+            playSound('win');
+            vibrate([100, 50, 100, 50, 200]);
+        }
+        
+        // 更新移动列表显示
+        function updateMoveList() {
+            const moveList = document.getElementById('moveList');
+            moveList.innerHTML = '';
+            
+            gameState.moveHistory.forEach((move, index) => {
+                const pieceName = pieceTypes[move.piece.toLowerCase()][move.turn];
+                const fromPos = `${String.fromCharCode(65 + move.from.x)}${10 - move.from.y}`;
+                const toPos = `${String.fromCharCode(65 + move.to.x)}${10 - move.to.y}`;
+                const captureText = move.captured ? '吃' : '→';
+                
+                const moveItem = document.createElement('div');
+                moveItem.className = `move-item ${move.turn}`;
+                moveItem.textContent = `${index + 1}. ${pieceName}${fromPos}${captureText}${toPos}`;
+                moveList.appendChild(moveItem);
+            });
+            
+            // 滚动到底部
+            moveList.scrollTop = moveList.scrollHeight;
         }
         
         // 悔棋
@@ -734,8 +932,10 @@
             gameState.currentTurn = lastMove.turn;
             gameState.selectedPiece = null;
             gameState.validMoves = [];
+            gameState.lastMove = gameState.moveHistory.length > 0 ? gameState.moveHistory[gameState.moveHistory.length - 1] : null;
             
             updatePlayerInfo();
+            updateMoveList();
             drawBoard();
         }
         
