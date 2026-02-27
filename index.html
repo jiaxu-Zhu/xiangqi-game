@@ -405,9 +405,11 @@
         canvas.width = baseSize.width;
         canvas.height = baseSize.height;
         
-        // 响应式调整 - 关键修复：动态调整 cellSize 和 margin，并同步画布内部分辨率
+        // 响应式调整 - 关键修复：使用父容器宽度，确保画布正确显示
         function resizeCanvas() {
-            const maxWidth = Math.min(window.innerWidth - 20, 500);
+            const container = document.querySelector('.game-container');
+            const containerWidth = container.clientWidth - 30; // 减去左右padding (15px each)
+            const maxWidth = Math.min(containerWidth, 500);
             const scale = maxWidth / baseSize.width;
             
             // 更新配置中的实际尺寸（基于 CSS 像素）
@@ -417,12 +419,12 @@
             const maxHeight = maxWidth * (baseSize.height / baseSize.width);
             
             // 设置画布的内部分辨率等于显示尺寸（1:1 映射，避免缩放问题）
-            canvas.width = maxWidth;
-            canvas.height = maxHeight;
+            canvas.width = Math.round(maxWidth);
+            canvas.height = Math.round(maxHeight);
             
             // 设置显示尺寸
-            canvas.style.width = maxWidth + 'px';
-            canvas.style.height = maxHeight + 'px';
+            canvas.style.width = Math.round(maxWidth) + 'px';
+            canvas.style.height = Math.round(maxHeight) + 'px';
             
             // 重绘棋盘
             drawBoard();
@@ -1029,15 +1031,16 @@
             ctx.stroke();
             
             // 楚河汉界
-            ctx.font = `${config.cellSize * 0.48}px Microsoft YaHei`;
+            const riverFontSize = Math.round(config.cellSize * 0.48);
+            ctx.font = `${riverFontSize}px Microsoft YaHei`;
             ctx.fillStyle = '#000';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.save();
             ctx.translate(config.margin + 2 * config.cellSize, config.margin + 4.5 * config.cellSize);
             ctx.rotate(-Math.PI / 2);
-            ctx.fillText('楚 河', 0, -config.cellSize * 0.4);
-            ctx.fillText('汉 界', 0, config.cellSize * 0.4);
+            ctx.fillText('楚 河', 0, -Math.round(config.cellSize * 0.4));
+            ctx.fillText('汉 界', 0, Math.round(config.cellSize * 0.4));
             ctx.restore();
             
             // 绘制有效移动位置
@@ -1110,10 +1113,10 @@
             const type = pieceCode.toLowerCase();
             const text = pieceTypes[type][isRed ? 'red' : 'black'];
             
-            // 使用动态计算的坐标
-            const px = config.margin + x * config.cellSize;
-            const py = config.margin + y * config.cellSize;
-            const radius = config.cellSize * 0.42;
+            // 使用动态计算的坐标 - 确保使用整数避免模糊
+            const px = Math.round(config.margin + x * config.cellSize);
+            const py = Math.round(config.margin + y * config.cellSize);
+            const radius = Math.round(config.cellSize * 0.42);
             
             // 阴影效果
             ctx.beginPath();
@@ -1139,13 +1142,14 @@
             
             // 内圈
             ctx.beginPath();
-            ctx.arc(px, py, config.cellSize * 0.35, 0, Math.PI * 2);
+            ctx.arc(px, py, Math.round(config.cellSize * 0.35), 0, Math.PI * 2);
             ctx.strokeStyle = isRed ? '#C00' : '#000';
             ctx.lineWidth = 1;
             ctx.stroke();
             
             // 文字 - 添加阴影效果
-            ctx.font = `bold ${config.cellSize * 0.5}px Microsoft YaHei`;
+            const fontSize = Math.round(config.cellSize * 0.5);
+            ctx.font = `bold ${fontSize}px Microsoft YaHei`;
             ctx.fillStyle = isRed ? '#C00' : '#000';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
@@ -1155,7 +1159,7 @@
             ctx.shadowBlur = 2;
             ctx.shadowOffsetX = 1;
             ctx.shadowOffsetY = 1;
-            ctx.fillText(text, px, py + config.cellSize * 0.05);
+            ctx.fillText(text, px, py + Math.round(config.cellSize * 0.05));
             
             // 重置阴影
             ctx.shadowColor = 'transparent';
