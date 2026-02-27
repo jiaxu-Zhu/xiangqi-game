@@ -760,27 +760,28 @@
                     const piece = gameState.board[y][x];
                     if (piece && getPieceColor(piece) === 'black') {
                         const moves = getValidMoves(x, y);
-                        moves.forEach(move => {
-                            // 模拟移动
-                            const captured = gameState.board[move.y][move.x];
-                            gameState.board[move.y][move.x] = piece;
-                            gameState.board[y][x] = null;
-                            
-                            // 评估这个移动
-                            const score = minimax(depth - 1, -Infinity, Infinity, false);
-                            
-                            // 撤销移动
-                            gameState.board[y][x] = piece;
-                            gameState.board[move.y][move.x] = captured;
-                            
-                            if (score > bestScore) {
-                                bestScore = score;
-                                bestMoves.length = 0;
-                                bestMoves.push({ fromX: x, fromY: y, toX: move.x, toY: move.y });
-                            } else if (score === bestScore) {
-                                bestMoves.push({ fromX: x, fromY: y, toX: move.x, toY: move.y });
-                            }
-                        });
+                    for (let i = 0; i < moves.length; i++) {
+                        const move = moves[i];
+                        // 模拟移动
+                        const captured = gameState.board[move.y][move.x];
+                        gameState.board[move.y][move.x] = piece;
+                        gameState.board[y][x] = null;
+                        
+                        // 评估这个移动
+                        const score = minimax(depth - 1, -Infinity, Infinity, false);
+                        
+                        // 撤销移动
+                        gameState.board[y][x] = piece;
+                        gameState.board[move.y][move.x] = captured;
+                        
+                        if (score > bestScore) {
+                            bestScore = score;
+                            bestMoves.length = 0;
+                            bestMoves.push({ fromX: x, fromY: y, toX: move.x, toY: move.y });
+                        } else if (score === bestScore) {
+                            bestMoves.push({ fromX: x, fromY: y, toX: move.x, toY: move.y });
+                        }
+                    }
                     }
                 }
             }
@@ -812,7 +813,8 @@
                         const piece = gameState.board[y][x];
                         if (piece && getPieceColor(piece) === 'red') {
                             const moves = getValidMoves(x, y);
-                            moves.forEach(move => {
+                            for (let i = 0; i < moves.length; i++) {
+                                const move = moves[i];
                                 const captured = gameState.board[move.y][move.x];
                                 gameState.board[move.y][move.x] = piece;
                                 gameState.board[y][x] = null;
@@ -825,7 +827,7 @@
                                 maxEval = Math.max(maxEval, eval);
                                 alpha = Math.max(alpha, eval);
                                 if (beta <= alpha) break;
-                            });
+                            }
                             if (beta <= alpha) break;
                         }
                     }
@@ -839,7 +841,8 @@
                         const piece = gameState.board[y][x];
                         if (piece && getPieceColor(piece) === 'black') {
                             const moves = getValidMoves(x, y);
-                            moves.forEach(move => {
+                            for (let i = 0; i < moves.length; i++) {
+                                const move = moves[i];
                                 const captured = gameState.board[move.y][move.x];
                                 gameState.board[move.y][move.x] = piece;
                                 gameState.board[y][x] = null;
@@ -852,7 +855,7 @@
                                 minEval = Math.min(minEval, eval);
                                 beta = Math.min(beta, eval);
                                 if (beta <= alpha) break;
-                            });
+                            }
                             if (beta <= alpha) break;
                         }
                     }
