@@ -148,10 +148,43 @@
             color: white;
             font-size: 20px;
             cursor: pointer;
-            z-index: 100;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
         .info-btn:hover {
             background: rgba(255,255,255,0.5);
+            transform: scale(1.1);
+        }
+        .info-btn:active {
+            transform: scale(0.95);
+        }
+        .sound-btn {
+            position: fixed;
+            top: 10px;
+            right: 60px;
+            background: rgba(255,255,255,0.3);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .sound-btn:hover {
+            background: rgba(255,255,255,0.5);
+            transform: scale(1.1);
+        }
+        .sound-btn:active {
+            transform: scale(0.95);
         }
         .sound-btn-off {
             background: rgba(255,0,0,0.4) !important;
@@ -248,8 +281,8 @@
     </style>
 </head>
 <body>
+    <button class="sound-btn" onclick="toggleSound()">🔊</button>
     <button class="info-btn" onclick="showInfo()">ℹ️</button>
-    <button class="info-btn" style="top: 55px;" onclick="toggleSound()">🔊</button>
     
     <div class="header">
         <div class="player-info active" id="redInfo">
@@ -352,25 +385,47 @@
         
         // 棋盘配置
         const config = {
-            cellSize: 50,
-            margin: 40,
+            baseCellSize: 50,
+            baseMargin: 40,
             boardWidth: 9,
-            boardHeight: 10
+            boardHeight: 10,
+            // 运行时计算的值
+            cellSize: 50,
+            margin: 40
         };
         
         // 计算画布尺寸
-        const boardPixelWidth = (config.boardWidth - 1) * config.cellSize + config.margin * 2;
-        const boardPixelHeight = (config.boardHeight - 1) * config.cellSize + config.margin * 2;
+        function calculateCanvasSize() {
+            const boardPixelWidth = (config.boardWidth - 1) * config.baseCellSize + config.baseMargin * 2;
+            const boardPixelHeight = (config.boardHeight - 1) * config.baseCellSize + config.baseMargin * 2;
+            return { width: boardPixelWidth, height: boardPixelHeight };
+        }
         
-        canvas.width = boardPixelWidth;
-        canvas.height = boardPixelHeight;
+        const baseSize = calculateCanvasSize();
+        canvas.width = baseSize.width;
+        canvas.height = baseSize.height;
         
-        // 响应式调整
+        // 响应式调整 - 关键修复：动态调整 cellSize 和 margin，并同步画布内部分辨率
         function resizeCanvas() {
             const maxWidth = Math.min(window.innerWidth - 20, 500);
-            const scale = maxWidth / boardPixelWidth;
+            const scale = maxWidth / baseSize.width;
+            
+            // 更新配置中的实际尺寸（基于 CSS 像素）
+            config.cellSize = config.baseCellSize * scale;
+            config.margin = config.baseMargin * scale;
+            
+            const maxHeight = maxWidth * (baseSize.height / baseSize.width);
+            
+            // 设置画布的内部分辨率等于显示尺寸（1:1 映射，避免缩放问题）
+            canvas.width = maxWidth;
+            canvas.height = maxHeight;
+            
+            // 设置显示尺寸
             canvas.style.width = maxWidth + 'px';
-            canvas.style.height = maxWidth * (boardPixelHeight / boardPixelWidth) + 'px';
+            canvas.style.height = maxHeight + 'px';
+            
+            // 重绘棋盘
+            drawBoard();
         }
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
@@ -935,7 +990,7 @@
             for (let i = 0; i < config.boardHeight; i++) {
                 ctx.beginPath();
                 ctx.moveTo(config.margin, config.margin + i * config.cellSize);
-                ctx.lineTo(boardPixelWidth - config.margin, config.margin + i * config.cellSize);
+                ctx.lineTo(canvas.width - config.margin, config.margin + i * config.cellSize);
                 ctx.stroke();
             }
             
@@ -948,7 +1003,7 @@
                 
                 ctx.beginPath();
                 ctx.moveTo(config.margin + i * config.cellSize, config.margin + 5 * config.cellSize);
-                ctx.lineTo(config.margin + i * config.cellSize, boardPixelHeight - config.margin);
+                ctx.lineTo(config.margin + i * config.cellSize, canvas.height - config.margin);
                 ctx.stroke();
             }
             
@@ -965,24 +1020,24 @@
             
             ctx.beginPath();
             ctx.moveTo(config.margin + 3 * config.cellSize, config.margin + 7 * config.cellSize);
-            ctx.lineTo(config.margin + 5 * config.cellSize, boardPixelHeight - config.margin);
+            ctx.lineTo(config.margin + 5 * config.cellSize, canvas.height - config.margin);
             ctx.stroke();
             
             ctx.beginPath();
             ctx.moveTo(config.margin + 5 * config.cellSize, config.margin + 7 * config.cellSize);
-            ctx.lineTo(config.margin + 3 * config.cellSize, boardPixelHeight - config.margin);
+            ctx.lineTo(config.margin + 3 * config.cellSize, canvas.height - config.margin);
             ctx.stroke();
             
             // 楚河汉界
-            ctx.font = '24px Microsoft YaHei';
+            ctx.font = `${config.cellSize * 0.48}px Microsoft YaHei`;
             ctx.fillStyle = '#000';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.save();
             ctx.translate(config.margin + 2 * config.cellSize, config.margin + 4.5 * config.cellSize);
             ctx.rotate(-Math.PI / 2);
-            ctx.fillText('楚 河', 0, -20);
-            ctx.fillText('汉 界', 0, 20);
+            ctx.fillText('楚 河', 0, -config.cellSize * 0.4);
+            ctx.fillText('汉 界', 0, config.cellSize * 0.4);
             ctx.restore();
             
             // 绘制有效移动位置
@@ -999,7 +1054,7 @@
                 } else {
                     // 可移动位置（绿色）
                     ctx.beginPath();
-                    ctx.arc(x, y, 8, 0, Math.PI * 2);
+                    ctx.arc(x, y, config.cellSize * 0.16, 0, Math.PI * 2);
                     ctx.fillStyle = 'rgba(0, 255, 0, 0.5)';
                     ctx.fill();
                 }
@@ -1055,6 +1110,7 @@
             const type = pieceCode.toLowerCase();
             const text = pieceTypes[type][isRed ? 'red' : 'black'];
             
+            // 使用动态计算的坐标
             const px = config.margin + x * config.cellSize;
             const py = config.margin + y * config.cellSize;
             const radius = config.cellSize * 0.42;
