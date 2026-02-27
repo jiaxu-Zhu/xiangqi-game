@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>中国象棋 v1.3.2</title>
+    <title>中国象棋 v1.3.4</title>
     <style>
         * {
             margin: 0;
@@ -319,7 +319,7 @@
     <div class="modal" id="infoModal">
         <div class="modal-content">
             <h2>🎮 中国象棋</h2>
-            <p style="text-align: center;"><strong>版本：</strong>v1.3.0 | <strong>更新时间：</strong>2026-02-27</p>
+            <p style="text-align: center;"><strong>版本：</strong>v1.3.4 | <strong>更新时间：</strong>2026-02-27</p>
             
             <h3>📖 游戏规则</h3>
             <ul>
@@ -358,6 +358,13 @@
                 <li>📱 移动端优化：触控操作、震动反馈</li>
                 <li>🔖 走棋记录：实时显示每一步棋的走法</li>
                 <li>🔁 悔棋功能：支持撤销上一步</li>
+            </ul>
+            
+            <h3>🔧 v1.3.4 紧急修复 (2026-02-27)</h3>
+            <ul>
+                <li>✅ 修复手机端棋子不显示问题：调整初始化顺序，确保 resizeCanvas 在 initGame 之前完成</li>
+                <li>✅ 优化画布尺寸计算：使用整数坐标避免模糊</li>
+                <li>✅ 添加调试日志以便快速诊断问题</li>
             </ul>
             
             <h3>🔧 v1.3.2 智能优化 (2026-02-27)</h3>
