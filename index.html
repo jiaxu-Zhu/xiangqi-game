@@ -409,9 +409,14 @@
         // 响应式调整 - 关键修复：使用父容器宽度，确保画布正确显示
         function resizeCanvas() {
             const container = document.querySelector('.game-container');
-            if (!container) return;
+            if (!container) {
+                console.log('Container not found');
+                return;
+            }
             
             let containerWidth = container.clientWidth - 30; // 减去左右padding (15px each)
+            
+            console.log('resizeCanvas: containerWidth=' + containerWidth);
             
             // 如果容器宽度太小（可能还未渲染完成），延迟重试
             if (containerWidth < 100) {
@@ -421,6 +426,8 @@
             
             const maxWidth = Math.min(containerWidth, 500);
             const scale = maxWidth / baseSize.width;
+            
+            console.log('resizeCanvas: maxWidth=' + maxWidth + ', scale=' + scale);
             
             // 更新配置中的实际尺寸（基于 CSS 像素）
             config.cellSize = config.baseCellSize * scale;
@@ -435,6 +442,8 @@
             // 设置显示尺寸
             canvas.style.width = Math.round(maxWidth) + 'px';
             canvas.style.height = Math.round(maxHeight) + 'px';
+            
+            console.log('resizeCanvas: canvas.width=' + canvas.width + ', canvas.height=' + canvas.height + ', config.cellSize=' + config.cellSize);
             
             // 重绘棋盘
             drawBoard();
@@ -623,6 +632,7 @@
         
         // 初始化游戏
         function initGame() {
+            console.log('initGame called: config.cellSize=' + config.cellSize + ', config.margin=' + config.margin);
             gameState.board = JSON.parse(JSON.stringify(initialBoard));
             gameState.currentTurn = 'red';
             gameState.selectedPiece = null;
@@ -633,7 +643,7 @@
             gameState.blackPieces = 16;
             gameState.lastMove = null;
             gameState.moveCache = new Map();
-            gameState.cacheValid = true;
+            gameState.cacheValid = false;
             updatePlayerInfo();
             drawBoard();
         }
@@ -994,6 +1004,7 @@
         
         // 绘制棋盘
         function drawBoard() {
+            console.log('drawBoard called: cellSize=' + config.cellSize + ', margin=' + config.margin);
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             // 绘制网格线
@@ -1076,10 +1087,12 @@
             });
             
             // 绘制棋子
+            console.log('Drawing pieces: cellSize=' + config.cellSize + ', margin=' + config.margin + ', canvas.width=' + canvas.width + ', canvas.height=' + canvas.height);
             for (let y = 0; y < config.boardHeight; y++) {
                 for (let x = 0; x < config.boardWidth; x++) {
                     const piece = gameState.board[y][x];
                     if (piece) {
+                        console.log(`  Drawing piece at (${x}, ${y}): ${piece}`);
                         drawPiece(x, y, piece);
                     }
                 }
