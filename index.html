@@ -302,6 +302,10 @@
             <p>总步数：<span id="totalMoves">0</span></p>
             <button class="btn" style="margin-top: 15px;" onclick="restartGame()">再来一局</button>
         </div>
+        <!-- 调试面板 -->
+        <div id="debugPanel" style="position: fixed; top: 10px; right: 10px; background: rgba(0,0,0,0.8); color: #0f0; padding: 10px; font-size: 12px; font-family: monospace; z-index: 1000; max-width: 300px; display: none;">
+            <div id="debugInfo"></div>
+        </div>
     </div>
     
     <div class="controls">
@@ -309,6 +313,7 @@
         <button class="btn" onclick="restartGame()">🔄 重新开始</button>
         <button class="btn" onclick="toggleAIMode()">🤖 AI 对战</button>
         <button class="btn" onclick="showInfo()">📖 规则说明</button>
+        <button class="btn" onclick="toggleDebug()">📱 调试</button>
     </div>
     
     <div class="move-history-panel">
@@ -412,6 +417,36 @@
         const baseSize = calculateCanvasSize();
         canvas.width = baseSize.width;
         canvas.height = baseSize.height;
+        
+        // 调试面板控制
+        let debugMode = false;
+        function toggleDebug() {
+            debugMode = !debugMode;
+            const panel = document.getElementById('debugPanel');
+            panel.style.display = debugMode ? 'block' : 'none';
+            if (debugMode) updateDebugInfo();
+        }
+        
+        function updateDebugInfo() {
+            if (!debugMode) return;
+            const info = document.getElementById('debugInfo');
+            const canvas = document.getElementById('chessCanvas');
+            const container = document.querySelector('.game-container');
+            
+            info.innerHTML = `
+                <strong>📱 调试信息</strong><br>
+                Canvas尺寸: ${canvas.width}×${canvas.height}px<br>
+                显示尺寸: ${canvas.style.width}×${canvas.style.height}<br>
+                Container宽度: ${container ? container.clientWidth : 'N/A'}px<br>
+                config.cellSize: ${config.cellSize.toFixed(2)}<br>
+                config.margin: ${config.margin.toFixed(2)}<br>
+                棋子数量: 红${gameState.redPieces} 黑${gameState.blackPieces}<br>
+                游戏初始化: ${window.gameInitialized ? '✅' : '❌'}<br>
+                当前回合: ${gameState.currentTurn}<br>
+                选中棋子: ${gameState.selectedPiece ? JSON.stringify(gameState.selectedPiece) : '无'}<br>
+                <button onclick="toggleDebug()" style="margin-top:5px;padding:2px 8px;">关闭</button>
+            `;
+        }
         
         // 响应式调整 - 关键修复：使用父容器宽度，确保画布正确显示
         function resizeCanvas() {
@@ -1143,6 +1178,9 @@
                 ctx.lineWidth = 2;
                 ctx.stroke();
             }
+            
+            // 更新调试面板
+            updateDebugInfo();
         }
         
         // 绘制单个棋子
