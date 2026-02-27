@@ -135,11 +135,13 @@
             overflow-y: auto;
             position: relative;
             box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            margin: 20px;
         }
         .modal-close-btn {
-            position: absolute;
-            top: 15px;
-            right: 15px;
+            position: sticky;
+            top: 0;
+            right: 0;
+            float: right;
             background: #f44336;
             color: white;
             border: none;
@@ -154,6 +156,7 @@
             line-height: 1;
             z-index: 10;
             transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
         .modal-close-btn:hover {
             background: #d32f2f;
@@ -161,6 +164,36 @@
         }
         .modal-close-btn:active {
             transform: scale(0.95);
+        }
+        
+        /* 自定义滚动条 */
+        .modal-content::-webkit-scrollbar {
+            width: 8px;
+        }
+        .modal-content::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        .modal-content::-webkit-scrollbar-thumb {
+            background: #8B4513;
+            border-radius: 4px;
+        }
+        .modal-content::-webkit-scrollbar-thumb:hover {
+            background: #A0522D;
+        }
+        
+        /* 移动端优化 */
+        @media (max-width: 500px) {
+            .modal-content {
+                width: 95%;
+                padding: 15px;
+                margin: 10px;
+            }
+            .modal-close-btn {
+                width: 28px;
+                height: 28px;
+                font-size: 18px;
+            }
         }
         .modal-content h2 {
             color: #8B4513;
@@ -321,6 +354,8 @@
                 <li>✅ 修复版本信息显示为 v1.3.8 的问题</li>
                 <li>✅ 添加明显的关闭按钮（右上角红色 X）</li>
                 <li>✅ 优化 modal 布局，确保所有内容可见</li>
+                <li>✅ 添加自定义滚动条样式</li>
+                <li>✅ 支持点击背景关闭 modal</li>
             </ul>
             
             <h3>🔧 v1.3.8 进一步优化布局 (2026-02-27)</h3>
@@ -1625,6 +1660,18 @@
         function hideInfo() {
             document.getElementById('infoModal').classList.remove('show');
         }
+        
+        // 点击背景关闭 modal
+        document.addEventListener('DOMContentLoaded', function() {
+            const infoModal = document.getElementById('infoModal');
+            if (infoModal) {
+                infoModal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        hideInfo();
+                    }
+                });
+            }
+        });
         
         // 启动游戏 - 延迟确保画布尺寸已正确初始化
         setTimeout(initGame, 150);
