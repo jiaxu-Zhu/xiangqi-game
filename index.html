@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>中国象棋 v1.3.5</title>
+    <title>中国象棋 v1.3.7</title>
     <style>
         * {
             margin: 0;
@@ -28,177 +28,85 @@
             max-width: 500px;
             padding: 10px 0;
             color: white;
+            gap: 10px;
         }
         .player-info {
             background: rgba(0,0,0,0.3);
-            padding: 10px 20px;
+            padding: 8px 12px;
             border-radius: 10px;
             text-align: center;
+            flex: 1;
+            min-width: 80px;
         }
         .player-info.active {
             background: rgba(255,255,0,0.3);
             box-shadow: 0 0 10px rgba(255,255,0,0.5);
         }
         .player-info h3 {
-            font-size: 16px;
-            margin-bottom: 5px;
+            font-size: 14px;
+            margin-bottom: 3px;
         }
         .player-info .pieces-left {
-            font-size: 12px;
+            font-size: 11px;
             opacity: 0.8;
         }
-        .move-history-panel {
-            background: rgba(255,255,255,0.95);
-            padding: 15px;
-            border-radius: 10px;
-            width: 100%;
-            max-width: 500px;
-            margin-top: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
-        .move-history-panel h4 {
-            color: #8B4513;
-            margin-bottom: 10px;
-            text-align: center;
-        }
-        .move-list {
+        .header-buttons {
             display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            max-height: 100px;
-            overflow-y: auto;
-        }
-        .move-item {
-            background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
-            color: white;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 13px;
-        }
-        .move-item.red {
-            background: linear-gradient(135deg, #C00 0%, #E00 100%);
-        }
-        .move-item.black {
-            background: linear-gradient(135deg, #000 0%, #333 100%);
-        }
-        .game-container {
-            position: relative;
-            background: #DEB887;
-            border-radius: 5px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            padding: 15px;
-            width: 100%;
-            max-width: 500px;
-            display: flex;
-            justify-content: center;
+            gap: 8px;
             align-items: center;
+            flex-shrink: 0;
         }
-        @media (max-width: 500px) {
-            .game-container {
-                padding: 10px;
-                max-width: calc(100vw - 20px);
-            }
-        }
-        #chessCanvas {
-            display: block;
-            border-radius: 3px;
-        }
-        .controls {
-            margin-top: 15px;
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            justify-content: center;
-            width: 100%;
-            max-width: 500px;
-        }
-        .btn {
-            background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 25px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            min-width: 80px;
-            min-height: 44px; /* 移动端最小触摸尺寸 */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            touch-action: manipulation;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
-        .btn:active {
-            transform: translateY(0);
-        }
-        @media (max-width: 500px) {
-            .btn {
-                padding: 14px 16px;
-                font-size: 13px;
-                min-width: 70px;
-                min-height: 48px;
-            }
-            .controls {
-                gap: 8px;
-            }
-        }
-        .info-btn {
-            position: fixed;
-            top: 10px;
-            right: 10px;
+        .info-btn, .sound-btn {
             background: rgba(255,255,255,0.3);
             border: none;
-            width: 40px;
-            height: 40px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             color: white;
-            font-size: 20px;
+            font-size: 18px;
             cursor: pointer;
-            z-index: 1000;
             backdrop-filter: blur(5px);
             -webkit-backdrop-filter: blur(5px);
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
+            transition: all 0.2s;
+            flex-shrink: 0;
         }
-        .info-btn:hover {
+        .info-btn:hover, .sound-btn:hover {
             background: rgba(255,255,255,0.5);
             transform: scale(1.1);
         }
-        .info-btn:active {
-            transform: scale(0.95);
-        }
-        .sound-btn {
-            position: fixed;
-            top: 10px;
-            right: 60px;
-            background: rgba(255,255,255,0.3);
-            border: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            color: white;
-            font-size: 20px;
-            cursor: pointer;
-            z-index: 1000;
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
-            touch-action: manipulation;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .sound-btn:hover {
-            background: rgba(255,255,255,0.5);
-            transform: scale(1.1);
-        }
-        .sound-btn:active {
+        .info-btn:active, .sound-btn:active {
             transform: scale(0.95);
         }
         .sound-btn-off {
             background: rgba(255,0,0,0.4) !important;
+        }
+        
+        /* 移动端优化 */
+        @media (max-width: 500px) {
+            .header {
+                max-width: 100vw;
+                padding: 8px 0;
+            }
+            .player-info {
+                padding: 6px 8px;
+                min-width: 70px;
+            }
+            .player-info h3 {
+                font-size: 12px;
+            }
+            .player-info .pieces-left {
+                font-size: 10px;
+            }
+            .header-buttons {
+                gap: 6px;
+            }
+            .info-btn, .sound-btn {
+                width: 32px;
+                height: 32px;
+                font-size: 16px;
+            }
         }
         .modal {
             display: none;
@@ -292,13 +200,14 @@
     </style>
 </head>
 <body>
-    <button class="sound-btn" onclick="toggleSound()">🔊</button>
-    <button class="info-btn" onclick="showInfo()">ℹ️</button>
-    
     <div class="header">
         <div class="player-info active" id="redInfo">
             <h3>🔴 红方</h3>
             <div class="pieces-left">剩余：<span id="redPieces">16</span></div>
+        </div>
+        <div class="header-buttons">
+            <button class="sound-btn" onclick="toggleSound()">🔊</button>
+            <button class="info-btn" onclick="showInfo()">ℹ️</button>
         </div>
         <div class="player-info" id="blackInfo">
             <h3>⚫ 黑方</h3>
@@ -335,7 +244,7 @@
     <div class="modal" id="infoModal">
         <div class="modal-content">
             <h2>🎮 中国象棋</h2>
-            <p style="text-align: center;"><strong>版本：</strong>v1.3.5 | <strong>更新时间：</strong>2026-02-27</p>
+            <p style="text-align: center;"><strong>版本：</strong>v1.3.6 | <strong>更新时间：</strong>2026-02-27</p>
             
             <h3>📖 游戏规则</h3>
             <ul>
@@ -374,6 +283,14 @@
                 <li>📱 移动端优化：触控操作、震动反馈</li>
                 <li>🔖 走棋记录：实时显示每一步棋的走法</li>
                 <li>🔁 悔棋功能：支持撤销上一步</li>
+            </ul>
+            
+            <h3>🔧 v1.3.7 修复按钮遮挡问题 (2026-02-27)</h3>
+            <ul>
+                <li>✅ 修复喇叭按钮和信息按钮遮挡下方内容：调整 header 布局为紧凑模式</li>
+                <li>✅ 优化 player-info 尺寸：减小 padding 和字体大小，适应小屏幕</li>
+                <li>✅ 按钮移到右侧独立区域：避免与玩家信息重叠</li>
+                <li>✅ 移动端适配：小屏幕下按钮自动缩小，不占用过多空间</li>
             </ul>
             
             <h3>🔧 v1.3.5 移动端适配优化 (2026-02-27)</h3>
