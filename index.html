@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>中国象棋 v1.3.7</title>
+    <title>中国象棋 v1.3.8</title>
     <style>
         * {
             margin: 0;
@@ -26,44 +26,44 @@
             align-items: center;
             width: 100%;
             max-width: 500px;
-            padding: 10px 0;
+            padding: 8px 0;
             color: white;
-            gap: 10px;
+            gap: 8px;
         }
         .player-info {
             background: rgba(0,0,0,0.3);
-            padding: 8px 12px;
-            border-radius: 10px;
+            padding: 6px 10px;
+            border-radius: 8px;
             text-align: center;
             flex: 1;
-            min-width: 80px;
+            min-width: 70px;
         }
         .player-info.active {
             background: rgba(255,255,0,0.3);
-            box-shadow: 0 0 10px rgba(255,255,0,0.5);
+            box-shadow: 0 0 8px rgba(255,255,0,0.5);
         }
         .player-info h3 {
-            font-size: 14px;
-            margin-bottom: 3px;
+            font-size: 13px;
+            margin-bottom: 2px;
         }
         .player-info .pieces-left {
-            font-size: 11px;
+            font-size: 10px;
             opacity: 0.8;
         }
         .header-buttons {
             display: flex;
-            gap: 8px;
+            gap: 6px;
             align-items: center;
             flex-shrink: 0;
         }
         .info-btn, .sound-btn {
             background: rgba(255,255,255,0.3);
             border: none;
-            width: 36px;
-            height: 36px;
+            width: 34px;
+            height: 34px;
             border-radius: 50%;
             color: white;
-            font-size: 18px;
+            font-size: 17px;
             cursor: pointer;
             backdrop-filter: blur(5px);
             -webkit-backdrop-filter: blur(5px);
@@ -87,25 +87,26 @@
         @media (max-width: 500px) {
             .header {
                 max-width: 100vw;
-                padding: 8px 0;
-            }
-            .player-info {
-                padding: 6px 8px;
-                min-width: 70px;
-            }
-            .player-info h3 {
-                font-size: 12px;
-            }
-            .player-info .pieces-left {
-                font-size: 10px;
-            }
-            .header-buttons {
+                padding: 6px 0;
                 gap: 6px;
             }
+            .player-info {
+                padding: 5px 8px;
+                min-width: 65px;
+            }
+            .player-info h3 {
+                font-size: 11px;
+            }
+            .player-info .pieces-left {
+                font-size: 9px;
+            }
+            .header-buttons {
+                gap: 5px;
+            }
             .info-btn, .sound-btn {
-                width: 32px;
-                height: 32px;
-                font-size: 16px;
+                width: 30px;
+                height: 30px;
+                font-size: 15px;
             }
         }
         .modal {
@@ -283,6 +284,15 @@
                 <li>📱 移动端优化：触控操作、震动反馈</li>
                 <li>🔖 走棋记录：实时显示每一步棋的走法</li>
                 <li>🔁 悔棋功能：支持撤销上一步</li>
+            </ul>
+            
+            <h3>🔧 v1.3.8 进一步优化布局 (2026-02-27)</h3>
+            <ul>
+                <li>✅ 进一步缩小 header 元素尺寸：player-info padding 从 8px→5px</li>
+                <li>✅ 按钮尺寸优化：从 34px→30px，更适合小屏幕</li>
+                <li>✅ 字体大小调整：标题 13px→11px，信息 10px→9px</li>
+                <li>✅ 间距优化：gap 从 10px→6px，整体更紧凑</li>
+                <li>✅ 移动端适配增强：确保所有元素在小屏幕上完美显示</li>
             </ul>
             
             <h3>🔧 v1.3.7 修复按钮遮挡问题 (2026-02-27)</h3>
