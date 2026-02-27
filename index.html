@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>中国象棋 v1.3.8</title>
+    <title>中国象棋 v1.3.9</title>
     <style>
         * {
             margin: 0;
@@ -116,22 +116,51 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.7);
+            background: rgba(0,0,0,0.8);
             justify-content: center;
             align-items: center;
             z-index: 1000;
+            overflow: hidden;
         }
         .modal.show {
             display: flex;
         }
         .modal-content {
             background: white;
-            padding: 25px;
+            padding: 20px;
             border-radius: 15px;
             max-width: 90%;
-            width: 500px;
-            max-height: 80vh;
+            width: 480px;
+            max-height: 85vh;
             overflow-y: auto;
+            position: relative;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        .modal-close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #f44336;
+            color: white;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            z-index: 10;
+            transition: all 0.2s;
+        }
+        .modal-close-btn:hover {
+            background: #d32f2f;
+            transform: scale(1.1);
+        }
+        .modal-close-btn:active {
+            transform: scale(0.95);
         }
         .modal-content h2 {
             color: #8B4513;
@@ -244,10 +273,11 @@
     
     <div class="modal" id="infoModal">
         <div class="modal-content">
-            <h2>🎮 中国象棋</h2>
-            <p style="text-align: center;"><strong>版本：</strong>v1.3.8 | <strong>更新时间：</strong>2026-02-27</p>
+            <button class="modal-close-btn" onclick="hideInfo()">✕</button>
+            <h2 style="text-align: center; margin-top: 10px;">🎮 中国象棋</h2>
+            <p style="text-align: center;"><strong>版本：</strong>v1.3.9 | <strong>更新时间：</strong>2026-02-27</p>
             
-            <h3>📖 游戏规则</h3>
+            <h3 style="margin-top: 20px;">📖 游戏规则</h3>
             <ul>
                 <li>点击选中棋子，再点击目标位置移动</li>
                 <li>红方先走，双方轮流行棋</li>
@@ -284,6 +314,13 @@
                 <li>📱 移动端优化：触控操作、震动反馈</li>
                 <li>🔖 走棋记录：实时显示每一步棋的走法</li>
                 <li>🔁 悔棋功能：支持撤销上一步</li>
+            </ul>
+            
+            <h3>🔧 v1.3.9 修复信息显示 (2026-02-27)</h3>
+            <ul>
+                <li>✅ 修复版本信息显示为 v1.3.8 的问题</li>
+                <li>✅ 添加明显的关闭按钮（右上角红色 X）</li>
+                <li>✅ 优化 modal 布局，确保所有内容可见</li>
             </ul>
             
             <h3>🔧 v1.3.8 进一步优化布局 (2026-02-27)</h3>
@@ -334,7 +371,7 @@
                 <li>📱 彻底修复手机端棋子不显示问题：修复画布初始化时序，确保容器就绪后再计算尺寸</li>
             </ul>
             
-            <button class="btn" onclick="hideInfo()">关闭</button>
+            <button class="btn" onclick="hideInfo()" style="width: 100%; margin-top: 20px;">关闭</button>
         </div>
     </div>
 
