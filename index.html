@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>中国象棋 v1.3.1</title>
+    <title>中国象棋 v1.3.2</title>
     <style>
         * {
             margin: 0;
@@ -360,7 +360,7 @@
                 <li>🔁 悔棋功能：支持撤销上一步</li>
             </ul>
             
-            <h3>🔧 v1.3.1 智能优化 (2026-02-27)</h3>
+            <h3>🔧 v1.3.2 智能优化 (2026-02-27)</h3>
             <ul>
                 <li>✅ 修复核心规则：实现将帅不能照面（飞将规则）</li>
                 <li>✅ 完善 AI 逻辑：检测将死状态，正确识别困毙</li>
@@ -373,7 +373,7 @@
                 <li>⚡ 性能优化：添加合法移动缓存系统，减少重复计算</li>
                 <li>⚡ AI 难度分级：支持简单/中等/困难三种难度</li>
                 <li>🎯 用户体验：改进响应式布局，优化视觉反馈</li>
-                <li>📱 彻底修复手机端棋子不显示问题：使用整数坐标和 1:1 画布映射</li>
+                <li>📱 彻底修复手机端棋子不显示问题：修复画布初始化时序，确保容器就绪后再计算尺寸</li>
             </ul>
             
             <button class="btn" onclick="hideInfo()">关闭</button>
@@ -409,7 +409,16 @@
         // 响应式调整 - 关键修复：使用父容器宽度，确保画布正确显示
         function resizeCanvas() {
             const container = document.querySelector('.game-container');
-            const containerWidth = container.clientWidth - 30; // 减去左右padding (15px each)
+            if (!container) return;
+            
+            let containerWidth = container.clientWidth - 30; // 减去左右padding (15px each)
+            
+            // 如果容器宽度太小（可能还未渲染完成），延迟重试
+            if (containerWidth < 100) {
+                setTimeout(resizeCanvas, 50);
+                return;
+            }
+            
             const maxWidth = Math.min(containerWidth, 500);
             const scale = maxWidth / baseSize.width;
             
@@ -430,7 +439,9 @@
             // 重绘棋盘
             drawBoard();
         }
-        resizeCanvas();
+        
+        // 延迟初始化，确保容器已渲染
+        setTimeout(resizeCanvas, 100);
         window.addEventListener('resize', resizeCanvas);
         
         // 棋子定义
@@ -1561,8 +1572,8 @@
             document.getElementById('infoModal').classList.remove('show');
         }
         
-        // 启动游戏
-        initGame();
+        // 启动游戏 - 延迟确保画布尺寸已正确初始化
+        setTimeout(initGame, 150);
     </script>
 </body>
 </html>
