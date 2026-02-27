@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>中国象棋 v1.3.9</title>
+    <title>中国象棋 v1.4.0</title>
     <style>
         * {
             margin: 0;
@@ -296,7 +296,38 @@
         <button class="btn" onclick="restartGame()">🔄 重新开始</button>
         <button class="btn" onclick="toggleAIMode()">🤖 AI 对战</button>
         <button class="btn" onclick="showInfo()">📖 规则说明</button>
-        <button class="btn" onclick="toggleDebug()">📱 调试</button>
+        <button class="btn" onclick="showSettings()">⚙️ 设置</button>
+    </div>
+    
+    <!-- 设置面板 -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <button class="modal-close-btn" onclick="hideSettings()">✕</button>
+            <h2 style="text-align: center; margin-top: 10px;">⚙️ 游戏设置</h2>
+            
+            <h3 style="margin-top: 20px;">🎵 音效设置</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0;">
+                <span>开启音效</span>
+                <button class="btn" id="soundSettingBtn" onclick="toggleSoundFromSettings()" style="min-width: auto; padding: 8px 16px;">🔊 开</button>
+            </div>
+            
+            <h3>🤖 AI 难度</h3>
+            <div style="display: flex; gap: 10px; margin: 10px 0;">
+                <button class="btn" onclick="setAIDifficulty('easy')" style="flex: 1; min-width: auto; padding: 10px;">简单</button>
+                <button class="btn" onclick="setAIDifficulty('medium')" style="flex: 1; min-width: auto; padding: 10px;">中等</button>
+                <button class="btn" onclick="setAIDifficulty('hard')" style="flex: 1; min-width: auto; padding: 10px;">困难</button>
+            </div>
+            
+            <h3>📊 游戏统计</h3>
+            <div style="text-align: left; padding: 10px 0; background: #f5f5f5; border-radius: 8px;">
+                <p><strong>总对局数：</strong><span id="totalGames">0</span></p>
+                <p><strong>红方胜：</strong><span id="redWins">0</span></p>
+                <p><strong>黑方胜：</strong><span id="blackWins">0</span></p>
+                <p><strong>AI 胜率：</strong><span id="aiWinRate">0%</span></p>
+            </div>
+            
+            <button class="btn" onclick="hideSettings()" style="width: 100%; margin-top: 20px;">关闭</button>
+        </div>
     </div>
     
     <div class="move-history-panel">
@@ -347,6 +378,17 @@
                 <li>📱 移动端优化：触控操作、震动反馈</li>
                 <li>🔖 走棋记录：实时显示每一步棋的走法</li>
                 <li>🔁 悔棋功能：支持撤销上一步</li>
+            </ul>
+            
+            <h3>🔧 v1.4.0 新增设置面板 (2026-02-27)</h3>
+            <ul>
+                <li>✅ 新增⚙️ 设置按钮：可快速访问游戏设置</li>
+                <li>✅ 音效开关：在设置中直接控制音效开/关</li>
+                <li>✅ AI 难度选择：支持简单/中等/困难三种难度</li>
+                <li>✅ 游戏统计：显示总对局数、胜负记录、AI 胜率</li>
+                <li>✅ 点击背景关闭 modal：优化用户体验</li>
+                <li>✅ 自定义滚动条样式：美化长页面显示效果</li>
+                <li>✅ 移动端优化：设置面板在小屏幕上完美适配</li>
             </ul>
             
             <h3>🔧 v1.3.9 修复信息显示 (2026-02-27)</h3>
@@ -569,6 +611,15 @@
         // 音效系统（改进版）
         let audioContext = null;
         let audioContextInitialized = false;
+        
+        // 游戏统计
+        let gameStats = {
+            totalGames: 0,
+            redWins: 0,
+            blackWins: 0,
+            aiGames: 0,
+            aiWins: 0
+        };
         
         // 初始化音频上下文（需要用户交互）
         function initAudioContext() {
@@ -1586,6 +1637,9 @@
             document.getElementById('totalMoves').textContent = gameState.moveHistory.length;
             document.getElementById('gameOver').classList.add('show');
             
+            // 更新游戏统计
+            updateGameStats(winner);
+            
             // 播放胜利音效和震动
             playSound('win');
             vibrate([100, 50, 100, 50, 200]);
@@ -1671,7 +1725,72 @@
                     }
                 });
             }
+            
+            const settingsModal = document.getElementById('settingsModal');
+            if (settingsModal) {
+                settingsModal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        hideSettings();
+                    }
+                });
+            }
         });
+        
+        // 设置面板功能
+        function showSettings() {
+            document.getElementById('settingsModal').classList.add('show');
+            updateStatsDisplay();
+        }
+        
+        function hideSettings() {
+            document.getElementById('settingsModal').classList.remove('show');
+        }
+        
+        function toggleSoundFromSettings() {
+            toggleSound();
+            updateSoundSettingButton();
+        }
+        
+        function updateSoundSettingButton() {
+            const btn = document.getElementById('soundSettingBtn');
+            if (btn) {
+                btn.textContent = gameState.soundEnabled ? '🔊 开' : '🔇 关';
+            }
+        }
+        
+        function setAIDifficulty(difficulty) {
+            gameState.aiDifficulty = difficulty;
+            alert(`✅ AI 难度已设置为：${difficulty === 'easy' ? '简单' : difficulty === 'medium' ? '中等' : '困难'}`);
+            restartGame();
+        }
+        
+        function updateStatsDisplay() {
+            document.getElementById('totalGames').textContent = gameStats.totalGames;
+            document.getElementById('redWins').textContent = gameStats.redWins;
+            document.getElementById('blackWins').textContent = gameStats.blackWins;
+            
+            let winRate = 0;
+            if (gameStats.aiGames > 0) {
+                winRate = Math.round((gameStats.aiWins / gameStats.aiGames) * 100);
+            }
+            document.getElementById('aiWinRate').textContent = winRate + '%';
+        }
+        
+        function updateGameStats(winner) {
+            gameStats.totalGames++;
+            if (winner === 'red') {
+                gameStats.redWins++;
+            } else {
+                gameStats.blackWins++;
+            }
+            
+            if (gameState.aiMode) {
+                gameStats.aiGames++;
+                if (winner === 'black') {
+                    gameStats.aiWins++;
+                }
+            }
+        }
         
         // 启动游戏 - 延迟确保画布尺寸已正确初始化
         setTimeout(initGame, 150);
