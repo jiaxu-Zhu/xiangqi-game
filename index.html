@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>中国象棋 v1.1.0</title>
+    <title>中国象棋 v1.2.0</title>
     <style>
         * {
             margin: 0;
@@ -130,6 +130,12 @@
             cursor: pointer;
             z-index: 100;
         }
+        .info-btn:hover {
+            background: rgba(255,255,255,0.5);
+        }
+        .sound-btn-off {
+            background: rgba(255,0,0,0.4) !important;
+        }
         .modal {
             display: none;
             position: fixed;
@@ -223,6 +229,7 @@
 </head>
 <body>
     <button class="info-btn" onclick="showInfo()">ℹ️</button>
+    <button class="info-btn" style="top: 55px;" onclick="toggleSound()">🔊</button>
     
     <div class="header">
         <div class="player-info active" id="redInfo">
@@ -247,6 +254,7 @@
     <div class="controls">
         <button class="btn" onclick="undoMove()">↩️ 悔棋</button>
         <button class="btn" onclick="restartGame()">🔄 重新开始</button>
+        <button class="btn" onclick="toggleAIMode()">🤖 AI 对战</button>
         <button class="btn" onclick="showInfo()">📖 规则说明</button>
     </div>
     
@@ -258,7 +266,7 @@
     <div class="modal" id="infoModal">
         <div class="modal-content">
             <h2>🎮 中国象棋</h2>
-            <p style="text-align: center;"><strong>版本：</strong>v1.1.0 | <strong>更新时间：</strong>2026-02-27</p>
+            <p style="text-align: center;"><strong>版本：</strong>v1.2.0 | <strong>更新时间：</strong>2026-02-27</p>
             
             <h3>📖 游戏规则</h3>
             <ul>
@@ -289,10 +297,14 @@
             
             <h3>✨ 新增功能</h3>
             <ul>
-                <li>音效系统：移动、吃子、胜利音效</li>
-                <li>震动反馈：移动端触觉反馈</li>
-                <li>走棋记录：实时显示每一步棋</li>
-                <li>精美画面：棋子立体效果、阴影</li>
+                <li>🤖 AI 对战模式：与智能 AI 对手对战</li>
+                <li>🔊 音效开关：可随时关闭/开启音效</li>
+                <li>🎯 AI 智能评估：基于 minimax 算法的 AI 对手</li>
+                <li>📊 棋子计数：实时显示双方剩余棋子数</li>
+                <li>🎨 精美画面：棋子立体效果、阴影、最后一步高亮</li>
+                <li>📱 移动端优化：触控操作、震动反馈</li>
+                <li>🔖 走棋记录：实时显示每一步棋的走法</li>
+                <li>🔁 悔棋功能：支持撤销上一步</li>
             </ul>
             
             <button class="btn" onclick="hideInfo()">关闭</button>
@@ -364,7 +376,9 @@
             redPieces: 16,
             blackPieces: 16,
             soundEnabled: true,
-            lastMove: null  // 记录最后一步移动，用于高亮显示
+            lastMove: null,  // 记录最后一步移动，用于高亮显示
+            aiMode: false,   // AI 对战模式
+            aiDifficulty: 'medium'  // AI 难度：easy, medium, hard
         };
         
         // 音效系统
@@ -422,7 +436,37 @@
                     oscillator.start(audioContext.currentTime);
                     oscillator.stop(audioContext.currentTime + 0.05);
                     break;
+                    
+                case 'ai-move':
+                    oscillator.frequency.value = 261;
+                    oscillator.type = 'sine';
+                    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.08);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.08);
+                    break;
             }
+        }
+        
+        // 切换音效开关
+        function toggleSound() {
+            gameState.soundEnabled = !gameState.soundEnabled;
+            updateSoundButton();
+        }
+        
+        function updateSoundButton() {
+            const btn = document.querySelector('.info-btn[onclick="toggleSound()"]');
+            if (btn) {
+                btn.textContent = gameState.soundEnabled ? '🔊' : '🔇';
+                btn.classList.toggle('sound-btn-off', !gameState.soundEnabled);
+            }
+        }
+        
+        // 切换 AI 模式
+        function toggleAIMode() {
+            gameState.aiMode = !gameState.aiMode;
+            alert(gameState.aiMode ? '✅ AI 对战模式已开启\n您执红先行，AI 执黑' : '❌ AI 对战模式已关闭\n切换到双人对战');
+            restartGame();
         }
         
         // 震动反馈（移动端）
@@ -442,8 +486,208 @@
             gameState.gameOver = false;
             gameState.redPieces = 16;
             gameState.blackPieces = 16;
+            gameState.lastMove = null;
             updatePlayerInfo();
             drawBoard();
+        }
+        
+        // ========== AI 对战逻辑 ==========
+        
+        // 棋子价值评估
+        const pieceValues = {
+            'k': 10000,  // 将/帅
+            'r': 900,    // 车
+            'c': 450,    // 炮
+            'n': 400,    // 马
+            'b': 200,    // 象/相
+            'a': 200,    // 士
+            'p': 100     // 兵/卒
+        };
+        
+        // 位置加成表（简化版）
+        const positionBonus = {
+            'p': {  // 兵/卒过河后价值增加
+                red: [[0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0],
+                      [50,50,50,50,50,50,50,50,50], [80,80,100,100,100,100,100,80,80], [100,100,150,150,150,150,150,100,100],
+                      [150,150,200,200,200,200,200,150,150], [200,200,250,250,300,250,250,200,200]],
+                black: [[200,200,250,250,300,250,250,200,200], [150,150,200,200,200,200,200,150,150], [100,100,150,150,150,150,150,100,100],
+                        [80,80,100,100,100,100,100,80,80], [50,50,50,50,50,50,50,50,50], [0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0]]
+            }
+        };
+        
+        // 评估棋盘局面分数
+        function evaluateBoard(board) {
+            let score = 0;
+            for (let y = 0; y < 10; y++) {
+                for (let x = 0; x < 9; x++) {
+                    const piece = board[y][x];
+                    if (piece) {
+                        const type = piece.toLowerCase();
+                        const isRed = piece === piece.toUpperCase();
+                        const value = pieceValues[type] || 0;
+                        
+                        // 位置加成
+                        let bonus = 0;
+                        if (type === 'p' && positionBonus[type]) {
+                            bonus = positionBonus[type][isRed ? 'red' : 'black'][y][x] || 0;
+                        }
+                        
+                        if (isRed) {
+                            score += (value + bonus);
+                        } else {
+                            score -= (value + bonus);
+                        }
+                    }
+                }
+            }
+            return score;
+        }
+        
+        // AI 选择最佳移动（简化版 minimax）
+        function getBestAIMove(depth = 2) {
+            const bestMoves = [];
+            let bestScore = -Infinity;
+            
+            // 获取所有黑方棋子的合法移动
+            for (let y = 0; y < 10; y++) {
+                for (let x = 0; x < 9; x++) {
+                    const piece = gameState.board[y][x];
+                    if (piece && getPieceColor(piece) === 'black') {
+                        const moves = getValidMoves(x, y);
+                        moves.forEach(move => {
+                            // 模拟移动
+                            const captured = gameState.board[move.y][move.x];
+                            gameState.board[move.y][move.x] = piece;
+                            gameState.board[y][x] = null;
+                            
+                            // 评估这个移动
+                            const score = minimax(depth - 1, -Infinity, Infinity, false);
+                            
+                            // 撤销移动
+                            gameState.board[y][x] = piece;
+                            gameState.board[move.y][move.x] = captured;
+                            
+                            if (score > bestScore) {
+                                bestScore = score;
+                                bestMoves.length = 0;
+                                bestMoves.push({ fromX: x, fromY: y, toX: move.x, toY: move.y });
+                            } else if (score === bestScore) {
+                                bestMoves.push({ fromX: x, fromY: y, toX: move.x, toY: move.y });
+                            }
+                        });
+                    }
+                }
+            }
+            
+            // 如果有多个同样好的移动，随机选择一个增加变化性
+            if (bestMoves.length > 0) {
+                const randomIndex = Math.floor(Math.random() * bestMoves.length);
+                return bestMoves[randomIndex];
+            }
+            return null;
+        }
+        
+        // Minimax 算法 with Alpha-Beta 剪枝
+        function minimax(depth, alpha, beta, isMaximizing) {
+            if (depth === 0) {
+                return evaluateBoard(gameState.board);
+            }
+            
+            // 检查是否将死
+            const kingExists = findKing(isMaximizing ? 'red' : 'black');
+            if (!kingExists) {
+                return isMaximizing ? -100000 : 100000;
+            }
+            
+            if (isMaximizing) {
+                let maxEval = -Infinity;
+                for (let y = 0; y < 10; y++) {
+                    for (let x = 0; x < 9; x++) {
+                        const piece = gameState.board[y][x];
+                        if (piece && getPieceColor(piece) === 'red') {
+                            const moves = getValidMoves(x, y);
+                            moves.forEach(move => {
+                                const captured = gameState.board[move.y][move.x];
+                                gameState.board[move.y][move.x] = piece;
+                                gameState.board[y][x] = null;
+                                
+                                const eval = minimax(depth - 1, alpha, beta, false);
+                                
+                                gameState.board[y][x] = piece;
+                                gameState.board[move.y][move.x] = captured;
+                                
+                                maxEval = Math.max(maxEval, eval);
+                                alpha = Math.max(alpha, eval);
+                                if (beta <= alpha) break;
+                            });
+                            if (beta <= alpha) break;
+                        }
+                    }
+                    if (beta <= alpha) break;
+                }
+                return maxEval;
+            } else {
+                let minEval = Infinity;
+                for (let y = 0; y < 10; y++) {
+                    for (let x = 0; x < 9; x++) {
+                        const piece = gameState.board[y][x];
+                        if (piece && getPieceColor(piece) === 'black') {
+                            const moves = getValidMoves(x, y);
+                            moves.forEach(move => {
+                                const captured = gameState.board[move.y][move.x];
+                                gameState.board[move.y][move.x] = piece;
+                                gameState.board[y][x] = null;
+                                
+                                const eval = minimax(depth - 1, alpha, beta, true);
+                                
+                                gameState.board[y][x] = piece;
+                                gameState.board[move.y][move.x] = captured;
+                                
+                                minEval = Math.min(minEval, eval);
+                                beta = Math.min(beta, eval);
+                                if (beta <= alpha) break;
+                            });
+                            if (beta <= alpha) break;
+                        }
+                    }
+                    if (beta <= alpha) break;
+                }
+                return minEval;
+            }
+        }
+        
+        // 查找将/帅是否存在
+        function findKing(color) {
+            for (let y = 0; y < 10; y++) {
+                for (let x = 0; x < 9; x++) {
+                    const piece = gameState.board[y][x];
+                    if (piece && piece.toLowerCase() === 'k' && getPieceColor(piece) === color) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+        
+        // AI 执行移动
+        function makeAIMove() {
+            if (!gameState.aiMode || gameState.gameOver || gameState.currentTurn !== 'black') {
+                return;
+            }
+            
+            // 延迟一下让游戏体验更好
+            setTimeout(() => {
+                const bestMove = getBestAIMove(2); // 深度 2，平衡性能和智能
+                
+                if (bestMove) {
+                    executeMove(bestMove.fromX, bestMove.fromY, bestMove.toX, bestMove.toY);
+                    playSound('ai-move');
+                } else {
+                    // 无棋可走，认输
+                    endGame('red');
+                }
+            }, 500);
         }
         
         // 更新玩家信息
@@ -873,6 +1117,9 @@
             updatePlayerInfo();
             updateMoveList();
             drawBoard();
+            
+            // 如果是 AI 模式且轮到黑方，触发 AI 移动
+            makeAIMove();
         }
         
         // 结束游戏
