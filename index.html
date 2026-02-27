@@ -447,6 +447,12 @@
             
             // 重绘棋盘
             drawBoard();
+            
+            // 标记 resize 完成，触发游戏初始化
+            if (!window.gameInitialized) {
+                window.gameInitialized = true;
+                initGame();
+            }
         }
         
         // 延迟初始化，确保容器已渲染
