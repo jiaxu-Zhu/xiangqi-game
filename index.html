@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>中国象棋 v1.3.4</title>
+    <title>中国象棋 v1.3.5</title>
     <style>
         * {
             margin: 0;
@@ -87,6 +87,17 @@
             border-radius: 5px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             padding: 15px;
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        @media (max-width: 500px) {
+            .game-container {
+                padding: 10px;
+                max-width: calc(100vw - 20px);
+            }
         }
         #chessCanvas {
             display: block;
@@ -324,7 +335,7 @@
     <div class="modal" id="infoModal">
         <div class="modal-content">
             <h2>🎮 中国象棋</h2>
-            <p style="text-align: center;"><strong>版本：</strong>v1.3.4 | <strong>更新时间：</strong>2026-02-27</p>
+            <p style="text-align: center;"><strong>版本：</strong>v1.3.5 | <strong>更新时间：</strong>2026-02-27</p>
             
             <h3>📖 游戏规则</h3>
             <ul>
@@ -363,6 +374,14 @@
                 <li>📱 移动端优化：触控操作、震动反馈</li>
                 <li>🔖 走棋记录：实时显示每一步棋的走法</li>
                 <li>🔁 悔棋功能：支持撤销上一步</li>
+            </ul>
+            
+            <h3>🔧 v1.3.5 移动端适配优化 (2026-02-27)</h3>
+            <ul>
+                <li>✅ 修复手机端界面显示不全问题：使用视口宽度计算画布尺寸</li>
+                <li>✅ 优化 .game-container：添加 max-width 和 flex 布局确保居中</li>
+                <li>✅ 移动端 padding 自适应：小屏幕使用更小的边距</li>
+                <li>✅ 改进 resizeCanvas：直接使用 window.innerWidth 获取准确视口尺寸</li>
             </ul>
             
             <h3>🔧 v1.3.4 紧急修复 (2026-02-27)</h3>
@@ -448,7 +467,7 @@
             `;
         }
         
-        // 响应式调整 - 关键修复：使用父容器宽度，确保画布正确显示
+        // 响应式调整 - 关键修复：使用视口宽度，确保画布正确显示
         function resizeCanvas() {
             const container = document.querySelector('.game-container');
             if (!container) {
@@ -456,17 +475,21 @@
                 return;
             }
             
-            let containerWidth = container.clientWidth - 30; // 减去左右padding (15px each)
+            // 获取视口宽度，考虑安全区域
+            const viewportWidth = Math.min(window.innerWidth, document.documentElement.clientWidth);
+            const padding = viewportWidth <= 500 ? 20 : 30; // 移动端更小的padding
+            let availableWidth = viewportWidth - padding;
             
-            console.log('resizeCanvas: containerWidth=' + containerWidth);
+            console.log('resizeCanvas: viewportWidth=' + viewportWidth + ', availableWidth=' + availableWidth);
             
-            // 如果容器宽度太小（可能还未渲染完成），延迟重试
-            if (containerWidth < 100) {
+            // 如果可用宽度太小，延迟重试
+            if (availableWidth < 100) {
                 setTimeout(resizeCanvas, 50);
                 return;
             }
             
-            const maxWidth = Math.min(containerWidth, 500);
+            // 限制最大宽度为500px
+            const maxWidth = Math.min(availableWidth, 500);
             const scale = maxWidth / baseSize.width;
             
             console.log('resizeCanvas: maxWidth=' + maxWidth + ', scale=' + scale);
